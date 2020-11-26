@@ -40,7 +40,7 @@ const getItem = (list, matchValue, matchField) => {
 const generateNormalData = (normal) => {
   let data = []
   for (let i = 0; i <= 200; i++) {
-    data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i) })
+    data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i), diff:normal[2].pdf(i - 100)  })
   }
   console.log(data)
   return (data)
@@ -155,7 +155,7 @@ function App() {
         updateHomeNormDist(newHomeNormDist)
         const newNormDist = NormalDistribution(tempHome.average - tempAway.average, tempHome.variance + tempAway.variance);
         updateNormDist(newNormDist)
-        const newGraphData = generateNormalData([newAwayNormDist, newHomeNormDist])
+        const newGraphData = generateNormalData([newAwayNormDist, newHomeNormDist, newNormDist])
         updateGraphData(newGraphData)
       }
     } catch (error) {
@@ -212,7 +212,9 @@ function App() {
       {/* {awayNormDist? <div>{JSON.stringify(awayNormDist.ppf(awayRandom))}</div> : null}
       {homeNormDist? <div>{JSON.stringify(homeNormDist.ppf(homeRandom))}</div> : null}
       <button onClick={refresh}>Refresh</button> */}
-      <ResponsiveContainer width="100%" height={500}>
+      <div className='row fullWidth spaceEvenly' >
+      <div style={{width: '50%', minWidth: '400px'}}>
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={graphData}
           margin={{
@@ -220,13 +222,31 @@ function App() {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
+          <XAxis dataKey="name" type='number' />
           <YAxis tickFormatter={formatYAxis} />
           <Legend />
           <Line type="monotone" strokeWidth={3} dataKey="away" stroke="#CC0014" name={`${away.location} ${away.nickname}`} dot={false} />
           <Line type="monotone" strokeWidth={3} dataKey="home" stroke="#31572c" name={`${home.location} ${home.nickname}`} dot={false} />
         </LineChart>
       </ResponsiveContainer>
+      </div>
+      <div style={{width: '50%', minWidth: '400px'}}>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart
+          data={graphData}
+          margin={{
+            top: 24, right: 56, left: 40, bottom: 8,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" type='number' tickFormatter={formatDiffXAxis}/>
+          <YAxis tickFormatter={formatYAxis} />
+          <Legend />
+          <Line type="monotone" strokeWidth={3} dataKey="diff" stroke="#000" name={`${home.location} ${home.nickname} - ${away.location} ${away.nickname}`} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+      </div>
+      </div>
       <div className='row fullWidth spaceEvenly'>
       <div className='rankingsTable'>
         <div className='fullWidth header'>Guy's Division</div>
@@ -259,6 +279,10 @@ function App() {
 
 const formatYAxis = (tickItem) => {
   return `${(tickItem * 100).toFixed(2)}%`
+}
+
+const formatDiffXAxis = (tickItem) => {
+  return tickItem - 100
 }
 
 export default App;
