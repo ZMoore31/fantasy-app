@@ -9,4 +9,41 @@
 .row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.spaceEvenly {
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.fullWidth {
+  width: 100%
+}
+
+.rankingsTable {
+  padding: 16px;
+}
+
+.rankingsTable .header {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.rankingsTable .row-header {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  padding: 4px 0;
+}
+
+.nameCell {
+  width: 200px;
+}
+
+.valueCell {
+  width: 100px;
+  text-align: center
 }

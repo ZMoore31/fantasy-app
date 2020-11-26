@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import axios from "axios";
 import NormalDistribution from 'gaussian';
 import {
@@ -39,12 +39,14 @@ const getItem = (list, matchValue, matchField) => {
 
 const generateNormalData = (normal) => {
   let data = []
-  for (let i = 0; i <= 200; i += 0.5) {
-    data.push({name: i, away: normal[0].pdf(i), home: normal[1].pdf(i)})
+  for (let i = 0; i <= 200; i++) {
+    data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i) })
   }
   console.log(data)
-  return(data)
+  return (data)
 }
+
+// const simulateRegularSeason = (teamDetails, remainingSchedule)
 
 function App() {
   const [currentWeek, updateCurrentWeek] = useState(null);
@@ -71,7 +73,7 @@ function App() {
   useEffect(() => {
     axios
       .get(
-        `https://fantasy.espn.com/apis/v3/games/ffl/seasons/${year}/segments/0/leagues/${league}`
+        `https://fantasy.espn.com/apis/v3/games/ffl/seasons/${year}/segments/0/leagues/${league}?view=mTeam`
       )
       .then(res => {
         updateCurrentWeek(Number(res.data.scoringPeriodId));
@@ -197,40 +199,66 @@ function App() {
       <div className='matchUpHeader'>
         <div>{away.location} {away.nickname} {normDist ? `(${(normDist.cdf(0) * 100).toFixed(2)}%)` : null} vs {home.location} {home.nickname} {normDist ? `(${((1 - normDist.cdf(0)) * 100).toFixed(2)}%)` : null}</div>
         <select name="matchUp" value={selectedMatchup} onChange={event => updateMatchup(event.target.value)}>
-        {currentWeekSchedule.map(obj => {
-          const awayTeam = getItem(teams, obj.away.teamId, 'id')
-          const homeTeam = getItem(teams, obj.home.teamId, 'id')
-          if (!homeTeam || !awayTeam) {
-            return null
-          }
-          return <option value={obj.id}>{awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
-        })}
-      </select>
+          {currentWeekSchedule.map(obj => {
+            const awayTeam = getItem(teams, obj.away.teamId, 'id')
+            const homeTeam = getItem(teams, obj.home.teamId, 'id')
+            if (!homeTeam || !awayTeam) {
+              return null
+            }
+            return <option value={obj.id}>{awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
+          })}
+        </select>
       </div>
       {/* {awayNormDist? <div>{JSON.stringify(awayNormDist.ppf(awayRandom))}</div> : null}
       {homeNormDist? <div>{JSON.stringify(homeNormDist.ppf(homeRandom))}</div> : null}
       <button onClick={refresh}>Refresh</button> */}
       <ResponsiveContainer width="100%" height={500}>
-      <LineChart
-        data={graphData}
-        margin={{
-          top: 24, right: 56, left: 40, bottom: 8,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis tickFormatter={formatYAxis}/>
-        <Legend />
-        <Line type="monotone" dataKey="away" stroke="blue" name={`${away.location} ${away.nickname}`} dot={false} />
-        <Line type="monotone" dataKey="home" stroke="red" name={`${home.location} ${home.nickname}`} dot={false} />
-      </LineChart>
+        <LineChart
+          data={graphData}
+          margin={{
+            top: 24, right: 56, left: 40, bottom: 8,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis tickFormatter={formatYAxis} />
+          <Legend />
+          <Line type="monotone" dataKey="away" stroke="blue" name={`${away.location} ${away.nickname}`} dot={false} />
+          <Line type="monotone" dataKey="home" stroke="red" name={`${home.location} ${home.nickname}`} dot={false} />
+        </LineChart>
       </ResponsiveContainer>
+      <div className='row fullWidth spaceEvenly'>
+      <div className='rankingsTable'>
+        <div className='fullWidth header'>Guy's Division</div>
+        <div className='row row-header'><div className='nameCell'>Team Name</div><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+        {teams.filter(obj => obj.divisionId === 0).sort((a,b)=>{
+          if (b.record.overall.wins - a.record.overall.wins === 0 ){
+            return b.record.overall.pointsFor - a.record.overall.pointsFor
+          }
+          return b.record.overall.wins - a.record.overall.wins
+        }).map(obj => {
+          return <div className='row'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+        })}
+      </div>
+      <div className='rankingsTable'>
+      <div className='fullWidth header'>Girl's Division</div>
+      <div className='row row-header'><div className='nameCell'>Team Name</div><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+        {teams.filter(obj => obj.divisionId === 1).sort((a,b)=>{
+          if (b.record.overall.wins - a.record.overall.wins === 0 ){
+            return b.record.overall.pointsFor - a.record.overall.pointsFor
+          }
+          return b.record.overall.wins - a.record.overall.wins
+        }).map(obj => {
+          return <div className='row'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+        })}
+      </div>
+      </div>
     </div>
   );
 }
 
 const formatYAxis = (tickItem) => {
   return `${(tickItem * 100).toFixed(2)}%`
-  }
+}
 
 export default App;
