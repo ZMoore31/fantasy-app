@@ -1,0 +1,12 @@
+.matchUpHeader {
+  font-size: 32px;
+  font-weight: bold;
+  width: 100vw;
+  text-align: center;
+  margin: 16px 0
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
