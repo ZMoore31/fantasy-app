@@ -223,8 +223,8 @@ function App() {
           <XAxis dataKey="name" />
           <YAxis tickFormatter={formatYAxis} />
           <Legend />
-          <Line type="monotone" dataKey="away" stroke="blue" name={`${away.location} ${away.nickname}`} dot={false} />
-          <Line type="monotone" dataKey="home" stroke="red" name={`${home.location} ${home.nickname}`} dot={false} />
+          <Line type="monotone" dataKey="away" stroke="#67597A" name={`${away.location} ${away.nickname}`} dot={false} />
+          <Line type="monotone" dataKey="home" stroke="#31572c" name={`${home.location} ${home.nickname}`} dot={false} />
         </LineChart>
       </ResponsiveContainer>
       <div className='row fullWidth spaceEvenly'>
