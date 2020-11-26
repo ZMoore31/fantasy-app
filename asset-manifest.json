@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/fantasy-app/static/css/main.cfd27dc1.chunk.css",
+    "main.js": "/fantasy-app/static/js/main.f1fdabe5.chunk.js",
+    "main.js.map": "/fantasy-app/static/js/main.f1fdabe5.chunk.js.map",
+    "runtime-main.js": "/fantasy-app/static/js/runtime-main.c8b99730.js",
+    "runtime-main.js.map": "/fantasy-app/static/js/runtime-main.c8b99730.js.map",
+    "static/js/2.b7d317e5.chunk.js": "/fantasy-app/static/js/2.b7d317e5.chunk.js",
+    "static/js/2.b7d317e5.chunk.js.map": "/fantasy-app/static/js/2.b7d317e5.chunk.js.map",
+    "static/js/3.9fe87593.chunk.js": "/fantasy-app/static/js/3.9fe87593.chunk.js",
+    "static/js/3.9fe87593.chunk.js.map": "/fantasy-app/static/js/3.9fe87593.chunk.js.map",
+    "index.html": "/fantasy-app/index.html",
+    "static/css/main.cfd27dc1.chunk.css.map": "/fantasy-app/static/css/main.cfd27dc1.chunk.css.map",
+    "static/js/2.b7d317e5.chunk.js.LICENSE.txt": "/fantasy-app/static/js/2.b7d317e5.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.c8b99730.js",
+    "static/js/2.b7d317e5.chunk.js",
+    "static/css/main.cfd27dc1.chunk.css",
+    "static/js/main.f1fdabe5.chunk.js"
+  ]
+}
