@@ -46,6 +46,24 @@ const generateNormalData = (normal) => {
   return (data)
 }
 
+const generateSimulation = (teams, futureSchedule) => {
+  futureSchedule.map(obj=>{
+    const awayTeam = getItem(teams, obj.away.teamId, 'id')
+    const awayDist = NormalDistribution(awayTeam.average, awayTeam.variance)
+    const homeTeam = getItem(teams, obj.home.teamId, 'id')
+    const homeDist = NormalDistribution(homeTeam.average, homeTeam.variance)
+    obj.away.totalPoints = awayDist.ppf(Math.random())
+    obj.home.totalPoints = homeDist.ppf(Math.random())
+    let winner
+    if (obj.away.totalPoints > obj.home.totalPoints) {
+      winner = 'AWAY'
+    } else {
+      winner = 'HOME'
+    }
+    obj.winner = winner
+    console.log(obj)
+  })
+}
 // const simulateRegularSeason = (teamDetails, remainingSchedule)
 
 function App() {
@@ -55,6 +73,7 @@ function App() {
   const [year, updateYear] = useState(2020);
   const [teams, updateTeams] = useState([]);
   const [schedule, updateSchedule] = useState([]);
+  const [futureSchedule, updateFutureSchedule] = useState([]);
   const [selectedMatchup, updateMatchup] = useState(null)
   const [away, updateAway] = useState({})
   const [home, updateHome] = useState({})
@@ -119,6 +138,9 @@ function App() {
         updateCurrentSchedule(
           currentSched
         );
+        updateFutureSchedule(res.data.schedule.filter(obj => {
+          return obj.matchupPeriodId >= currentWeek
+        }))
         if (currentSched.length > 0) {
           updateMatchup(
             currentSched[0].id
@@ -134,7 +156,7 @@ function App() {
           .filter(obj2 => {
             return obj2.teamId === obj.id;
           })
-          .map(obj3 => obj3.totalPoints)
+          .map(obj3 => obj3.totalPoints), 5
       )
 
       return { ...obj, average: stats.average, variance: stats.variance }
@@ -174,7 +196,8 @@ function App() {
   if (!selectedMatchup) {
     return <div>Getting matchup data...</div>
   }
-
+  console.log(futureSchedule)
+  console.log(teams)
   return (
     <div>
       {/* {teams.map(obj => (
@@ -314,8 +337,8 @@ function App() {
             </div>
           </div>
         </div>
-
       </div>
+      <button onClick={()=>generateSimulation(teams, futureSchedule)}>Run Simulation</button>
     </div>
   );
 }
