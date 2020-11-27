@@ -3,13 +3,22 @@
   font-weight: bold;
   width: 100vw;
   text-align: center;
-  margin: 16px 0
+  padding: 16px 0
+}
+
+.matchUpSelect {
+  margin: 16px 0;
 }
 
 .row {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
 }
 
 .spaceEvenly {
@@ -23,6 +32,7 @@
 
 .rankingsTable {
   padding: 16px;
+  margin: 8px;
 }
 
 .rankingsTable .header {
@@ -36,14 +46,62 @@
   display: flex;
   align-items: center;
   font-weight: bold;
-  padding: 4px 0;
+  margin: 4px 0;
+  height: 36px;
+}
+
+.rankingsTable .row {
+  flex-wrap: nowrap;
 }
 
 .nameCell {
   width: 200px;
+  flex: 0 0 auto;
+}
+
+.valueCells{
+  flex-wrap: nowrap;
+  width: auto;
+  overflow: scroll;
 }
 
 .valueCell {
   width: 100px;
-  text-align: center
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.graphContainer {
+  width: 50%;
+  min-width: 400px;
+}
+
+@media only screen and (max-width: 600px) {
+  .matchUpHeader {
+   font-size: 20px;
+   padding: 16px 4px
+  }
+  .rankingsTable .row-header {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    padding: 0;
+  }
+  .valueCells{
+    width: calc(92vw - 200px);
+  }
+  /* .nameCell {
+    width: 100%;
+    text-align: center;
+    padding: 8px 0;
+  }
+  
+  .valueCell {
+    width: 25%;
+    text-align: center
+  } */
+  .graphContainer {
+    min-width: 100%
+    
+  }
 }

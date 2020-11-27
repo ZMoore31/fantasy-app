@@ -40,7 +40,7 @@ const getItem = (list, matchValue, matchField) => {
 const generateNormalData = (normal) => {
   let data = []
   for (let i = 0; i <= 200; i++) {
-    data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i), diff:normal[2].pdf(i - 100)  })
+    data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i), diff: normal[2].pdf(i - 100) })
   }
   console.log(data)
   return (data)
@@ -163,8 +163,16 @@ function App() {
     }
   }, [selectedMatchup, currentWeekSchedule, teams])
 
-  if (teams.length === 0 || schedule.length === 0 || !selectedMatchup) {
-    return <div>loading...</div>
+  if (teams.length === 0) {
+    return <div>Getting team data...</div>
+  }
+
+  if (schedule.length === 0) {
+    return <div>Getting historical data...</div>
+  }
+
+  if (!selectedMatchup) {
+    return <div>Getting matchup data...</div>
   }
 
   return (
@@ -197,8 +205,7 @@ function App() {
       ))} */}
 
       <div className='matchUpHeader'>
-        <div>{away.location} {away.nickname} {normDist ? `(${(normDist.cdf(0) * 100).toFixed(2)}%)` : null} vs {home.location} {home.nickname} {normDist ? `(${((1 - normDist.cdf(0)) * 100).toFixed(2)}%)` : null}</div>
-        <select name="matchUp" value={selectedMatchup} onChange={event => updateMatchup(event.target.value)}>
+        <select name="matchUp" className="matchUpSelect" value={selectedMatchup} onChange={event => updateMatchup(event.target.value)}>
           {currentWeekSchedule.map(obj => {
             const awayTeam = getItem(teams, obj.away.teamId, 'id')
             const homeTeam = getItem(teams, obj.home.teamId, 'id')
@@ -208,70 +215,106 @@ function App() {
             return <option value={obj.id}>{awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
           })}
         </select>
+        <div>{away.location} {away.nickname} {normDist ? `(${(normDist.cdf(0) * 100).toFixed(2)}%)` : null} vs {home.location} {home.nickname} {normDist ? `(${((1 - normDist.cdf(0)) * 100).toFixed(2)}%)` : null}</div>
       </div>
       {/* {awayNormDist? <div>{JSON.stringify(awayNormDist.ppf(awayRandom))}</div> : null}
       {homeNormDist? <div>{JSON.stringify(homeNormDist.ppf(homeRandom))}</div> : null}
       <button onClick={refresh}>Refresh</button> */}
       <div className='row fullWidth spaceEvenly' >
-      <div style={{width: '50%', minWidth: '400px'}}>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart
-          data={graphData}
-          margin={{
-            top: 24, right: 56, left: 40, bottom: 8,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" type='number' />
-          <YAxis tickFormatter={formatYAxis} />
-          <Legend />
-          <Line type="monotone" strokeWidth={3} dataKey="away" stroke="#CC0014" name={`${away.location} ${away.nickname}`} dot={false} />
-          <Line type="monotone" strokeWidth={3} dataKey="home" stroke="#31572c" name={`${home.location} ${home.nickname}`} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-      </div>
-      <div style={{width: '50%', minWidth: '400px'}}>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart
-          data={graphData}
-          margin={{
-            top: 24, right: 56, left: 40, bottom: 8,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" type='number' tickFormatter={formatDiffXAxis}/>
-          <YAxis tickFormatter={formatYAxis} />
-          <Legend />
-          <Line type="monotone" strokeWidth={3} dataKey="diff" stroke="#000" name={`${home.location} ${home.nickname} - ${away.location} ${away.nickname}`} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-      </div>
+        <div className='graphContainer'>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={graphData}
+              margin={{
+                top: 24, right: 56, left: 40, bottom: 8,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" type='number' />
+              <YAxis tickFormatter={formatYAxis} />
+              <Legend />
+              <Line type="monotone" strokeWidth={3} dataKey="away" stroke="#CC0014" name={`${away.location} ${away.nickname}`} dot={false} />
+              <Line type="monotone" strokeWidth={3} dataKey="home" stroke="#31572c" name={`${home.location} ${home.nickname}`} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div className='graphContainer'>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={graphData}
+              margin={{
+                top: 24, right: 56, left: 40, bottom: 8,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" type='number' tickFormatter={formatDiffXAxis} />
+              <YAxis tickFormatter={formatYAxis} />
+              <Legend />
+              <Line type="monotone" strokeWidth={3} dataKey="diff" stroke="#000" name={`${home.location} ${home.nickname} - ${away.location} ${away.nickname}`} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
       <div className='row fullWidth spaceEvenly'>
-      <div className='rankingsTable'>
-        <div className='fullWidth header'>Guy's Division</div>
-        <div className='row row-header'><div className='nameCell'>Team Name</div><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
-        {teams.filter(obj => obj.divisionId === 0).sort((a,b)=>{
-          if (b.record.overall.wins - a.record.overall.wins === 0 ){
-            return b.record.overall.pointsFor - a.record.overall.pointsFor
-          }
-          return b.record.overall.wins - a.record.overall.wins
-        }).map(obj => {
-          return <div className='row'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
-        })}
-      </div>
-      <div className='rankingsTable'>
-      <div className='fullWidth header'>Girl's Division</div>
-      <div className='row row-header'><div className='nameCell'>Team Name</div><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
-        {teams.filter(obj => obj.divisionId === 1).sort((a,b)=>{
-          if (b.record.overall.wins - a.record.overall.wins === 0 ){
-            return b.record.overall.pointsFor - a.record.overall.pointsFor
-          }
-          return b.record.overall.wins - a.record.overall.wins
-        }).map(obj => {
-          return <div className='row'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
-        })}
-      </div>
+        <div className='rankingsTable'>
+          <div className='fullWidth header'>Guy's Division</div>
+          <div className='row'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              {teams.filter(obj => obj.divisionId === 0).sort((a, b) => {
+                if (b.record.overall.wins - a.record.overall.wins === 0) {
+                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                }
+                return b.record.overall.wins - a.record.overall.wins
+              }).map(obj => {
+                return <div className='nameCell'>{obj.location} {obj.nickname}</div>
+
+              })}
+            </div>
+            <div className='col valueCells'>
+              <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+              {teams.filter(obj => obj.divisionId === 0).sort((a, b) => {
+                if (b.record.overall.wins - a.record.overall.wins === 0) {
+                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                }
+                return b.record.overall.wins - a.record.overall.wins
+              }).map(obj => {
+                return <div className="row"><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+
+              })}
+            </div>
+          </div>
+        </div>
+        <div className='rankingsTable'>
+          <div className='fullWidth header'>Girl's Division</div>
+          <div className='row'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              {teams.filter(obj => obj.divisionId === 1).sort((a, b) => {
+                if (b.record.overall.wins - a.record.overall.wins === 0) {
+                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                }
+                return b.record.overall.wins - a.record.overall.wins
+              }).map(obj => {
+                return <div className='nameCell'>{obj.location} {obj.nickname}</div>
+
+              })}
+            </div>
+            <div className='col valueCells'>
+              <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+              {teams.filter(obj => obj.divisionId === 1).sort((a, b) => {
+                if (b.record.overall.wins - a.record.overall.wins === 0) {
+                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                }
+                return b.record.overall.wins - a.record.overall.wins
+              }).map(obj => {
+                return <div className="row"><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+
+              })}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
