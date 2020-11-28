@@ -148,6 +148,8 @@ function App() {
   const [homeRandom, updateHomeRandom] = useState(Math.random())
   const [graphData, updateGraphData] = useState([])
   const [simulatedData, updateSimulation] = useState([])
+  const [numberOfSims, updateNumberOfSims] = useState(10000)
+  const [weeksForProj, updateWeeksForPro] = useState(5)
 
   const refresh = () => {
     updateAwayRandom(Math.random())
@@ -157,7 +159,7 @@ function App() {
   const simulation = () => {
     let results = []
     let data = []
-    for (let i = 1; i <= 10000; i++) {
+    for (let i = 1; i <= numberOfSims; i++) {
       const future = generateSimulationScores(teams, futureSchedule)
       const sim = calcRecords([...pastSchedule, ...future], teams)
       results.push([...pastSchedule, ...future])
@@ -176,12 +178,12 @@ function App() {
         return map
       }, {})
       for (let y in data[x]) {
-        aggData[aggIndexes[data[x][y].id]].playoffSeed += data[x][indexes[data[x][y].id]].playoffSeed / 10000
-        aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] = (aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] || 0) + 1;
-        aggData[aggIndexes[data[x][y].id]].record.calculated.wins += data[x][indexes[data[x][y].id]].record.calculated.wins/ 10000
-        aggData[aggIndexes[data[x][y].id]].record.calculated.losses += data[x][indexes[data[x][y].id]].record.calculated.losses / 10000
-        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsFor += data[x][indexes[data[x][y].id]].record.calculated.pointsFor / 10000
-        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsAgainst += data[x][indexes[data[x][y].id]].record.calculated.pointsAgainst / 10000
+        aggData[aggIndexes[data[x][y].id]].playoffSeed += data[x][indexes[data[x][y].id]].playoffSeed / numberOfSims
+        aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] = (aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] || 0) + 1 / numberOfSims;
+        aggData[aggIndexes[data[x][y].id]].record.calculated.wins += data[x][indexes[data[x][y].id]].record.calculated.wins / numberOfSims
+        aggData[aggIndexes[data[x][y].id]].record.calculated.losses += data[x][indexes[data[x][y].id]].record.calculated.losses / numberOfSims
+        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsFor += data[x][indexes[data[x][y].id]].record.calculated.pointsFor / numberOfSims
+        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsAgainst += data[x][indexes[data[x][y].id]].record.calculated.pointsAgainst / numberOfSims
       }
     }
     console.log(aggData)
@@ -253,7 +255,7 @@ function App() {
           .filter(obj2 => {
             return obj2.teamId === obj.id;
           })
-          .map(obj3 => obj3.totalPoints), 5
+          .map(obj3 => obj3.totalPoints), weeksForProj
       )
 
       return { ...obj, average: stats.average, variance: stats.variance }
@@ -301,34 +303,7 @@ function App() {
 
   return (
     <div>
-      {/* {teams.map(obj => (
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          <div>
-            <span>{obj.id} </span>
-            <span>{obj.location} </span>
-            <span>{obj.nickname}</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {schedule
-              .filter(obj2 => {
-                return obj2.teamId === obj.id;
-              })
-              .map(obj3 => (
-                <div>
-                  <div>{obj3.totalPoints}</div>
-                </div>
-              ))}
-          </div>
-          <div>
-            {obj.average}
-          </div>
-          <div>
-            {Math.sqrt(obj.variance)}
-          </div>
-        </div>
-      ))} */}
-
-      <div className='matchUpHeader'>
+      <div className='row centerRow'>
         <select name="matchUp" className="matchUpSelect" value={selectedMatchup} onChange={event => updateMatchup(event.target.value)}>
           {currentWeekSchedule.map(obj => {
             const awayTeam = getItem(teams, obj.away.teamId, 'id')
@@ -339,11 +314,23 @@ function App() {
             return <option value={obj.id}>{awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
           })}
         </select>
-        <div>{away.location} {away.nickname} {normDist ? `(${(normDist.cdf(0) * 100).toFixed(2)}%)` : null} vs {home.location} {home.nickname} {normDist ? `(${((1 - normDist.cdf(0)) * 100).toFixed(2)}%)` : null}</div>
       </div>
-      {/* {awayNormDist? <div>{JSON.stringify(awayNormDist.ppf(awayRandom))}</div> : null}
-      {homeNormDist? <div>{JSON.stringify(homeNormDist.ppf(homeRandom))}</div> : null}
-      <button onClick={refresh}>Refresh</button> */}
+      <div className='row fullWidth spaceEvenly'>
+        <div className='table'>
+          {away.average && away.variance && home.average && home.variance && <div className='row'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              <div className='nameCell'>{away.location} {away.nickname}</div>
+              <div className='nameCell'>{home.location} {home.nickname}</div>
+            </div>
+            <div className='col valueCells'>
+              <div className='row row-header'><div className='valueCell'>Proj Points</div><div className='valueCell'>Standard Deviation</div><div className='valueCell'>Win %</div></div>
+              <div className='row'><div className='valueCell'>{away.average.toFixed(2)}</div><div className='valueCell'>{Math.sqrt(away.variance).toFixed(2)}</div><div className='valueCell'>{(normDist.cdf(0) * 100).toFixed(2)}%</div></div>
+              <div className='row'><div className='valueCell'>{home.average.toFixed(2)}</div><div className='valueCell'>{Math.sqrt(home.variance).toFixed(2)}</div><div className='valueCell'>{((1 - normDist.cdf(0)) * 100).toFixed(2)}%</div></div>
+            </div>
+          </div>}
+        </div>
+      </div>
       <div className='row fullWidth spaceEvenly' >
         <div className='graphContainer'>
           <ResponsiveContainer width="100%" height={300}>
@@ -380,7 +367,7 @@ function App() {
         </div>
       </div>
       <div className='row fullWidth spaceEvenly'>
-        <div className='rankingsTable'>
+        <div className='table'>
           <div className='fullWidth header'>Guy's Division</div>
           <div className='row'>
             <div className='col'>
@@ -409,7 +396,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className='rankingsTable'>
+        <div className='table'>
           <div className='fullWidth header'>Girl's Division</div>
           <div className='row'>
             <div className='col'>
@@ -439,15 +426,15 @@ function App() {
           </div>
         </div>
       </div>
-      <div className='rankingsTable'>
+      <div className='table'>
         <div className='fullWidth header'>Playoff Rankings</div>
         {teams.map(obj => {
-return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
+          return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
         })}
       </div>
-
-      <div className='row fullWidth spaceEvenly'>
-        <div className='rankingsTable'>
+      <div className='row fullWidth centerRow' style={{margin: '24px 0 8px 0'}}><button onClick={simulation}>{simulatedData.length ? "Refresh" : "Run"} Simulation</button></div>
+      {simulatedData.length && <Fragment><div className='row fullWidth spaceEvenly'>
+        <div className='table'>
           <div className='fullWidth header'>Projected Guy's Division</div>
           <div className='row'>
             <div className='col'>
@@ -476,7 +463,7 @@ return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.l
             </div>
           </div>
         </div>
-        <div className='rankingsTable'>
+        <div className='table'>
           <div className='fullWidth header'>Projected Girl's Division</div>
           <div className='row'>
             <div className='col'>
@@ -507,13 +494,48 @@ return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.l
         </div>
       </div>
 
-      <div className='rankingsTable'>
-        <div className='fullWidth header'>Projected Playoff Rankings</div>
-        {simulatedData.map(obj => {
-          return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
-        })}
-      </div>
-      <button onClick={simulation}>Run Simulation</button>
+        <div className='table'>
+          <div className='fullWidth header'>Projected Playoff Rankings</div>
+          <div className='row centerRow'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              {simulatedData.map(obj => {
+                return (
+
+                  <div className='nameCell'>{obj.location} {obj.nickname}</div>
+                )
+              })}
+            </div>
+            <div className='col valueCells'>
+              <div className='row row-header'>
+                <div className='valueCell'>Avg Playoff Seed</div>
+                <div className='valueCell'>Playoff %</div>
+                {simulatedData.map((_, index) => {
+                  return <div className='valueCell'>{index + 1}</div>
+                })}
+              </div>
+              {simulatedData.map(obj => {
+                return (
+                  <div className='row'>
+                    <div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div>
+                    <div className='valueCell'>{(Object.values(obj.playoffMatrix).reduce((a, b, index) => {
+                      if (Object.keys(obj.playoffMatrix)[index] <= 6) {
+                        return a + b
+                      }
+                      return a
+                    }, 0) * 100).toFixed(2)}%</div>
+                    {simulatedData.map((_, index) => {
+                      if (obj.playoffMatrix[index + 1]) {
+                        return <div className='valueCell'>{(obj.playoffMatrix[index + 1] * 100).toFixed(2)}%</div>
+                      }
+                      return <div className='valueCell'>-</div>
+                    })}
+                  </div>)
+              })}
+            </div>
+          </div>
+        </div>
+      </Fragment>}
     </div>
   );
 }
