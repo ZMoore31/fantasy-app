@@ -199,7 +199,7 @@ function App() {
       )
       .then(res => {
         updateCurrentWeek(Number(res.data.scoringPeriodId));
-        // updateCurrentWeek(3);
+        // updateCurrentWeek(6);
         updateTeams(res.data.teams);
       });
   }, [league, year]);
@@ -267,9 +267,9 @@ function App() {
 
   useEffect(() => {
     try {
-      const tempAway = getItem(teams, getItem(currentWeekSchedule, Number(selectedMatchup), 'id').away.teamId, 'id')
+      const tempAway = getItem(teams, getItem(futureSchedule, Number(selectedMatchup), 'id').away.teamId, 'id')
       updateAway(tempAway)
-      const tempHome = getItem(teams, getItem(currentWeekSchedule, Number(selectedMatchup), 'id').home.teamId, 'id')
+      const tempHome = getItem(teams, getItem(futureSchedule, Number(selectedMatchup), 'id').home.teamId, 'id')
       updateHome(tempHome)
       if (tempHome.average && tempAway.average) {
         const newAwayNormDist = NormalDistribution(tempAway.average, tempAway.variance);
@@ -306,13 +306,13 @@ function App() {
     <div>
       <div className='row centerRow'>
         <select name="matchUp" className="matchUpSelect" value={selectedMatchup} onChange={event => updateMatchup(event.target.value)}>
-          {currentWeekSchedule.map(obj => {
+          {futureSchedule.map(obj => {
             const awayTeam = getItem(teams, obj.away.teamId, 'id')
             const homeTeam = getItem(teams, obj.home.teamId, 'id')
             if (!homeTeam || !awayTeam) {
               return null
             }
-            return <option value={obj.id}>{awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
+            return <option value={obj.id}>Week {obj.matchupPeriodId}: {awayTeam.location} {awayTeam.nickname} vs {homeTeam.location} {homeTeam.nickname}</option>
           })}
         </select>
       </div>
