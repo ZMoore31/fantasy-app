@@ -42,12 +42,11 @@ const generateNormalData = (normal) => {
   for (let i = 0; i <= 200; i++) {
     data.push({ name: i, away: normal[0].pdf(i), home: normal[1].pdf(i), diff: normal[2].pdf(i - 100) })
   }
-  console.log(data)
   return (data)
 }
 
-const generateSimulation = (teams, futureSchedule) => {
-  futureSchedule.map(obj=>{
+const generateSimulationScores = (teams, futureSchedule) => {
+  return futureSchedule.map(obj => {
     const awayTeam = getItem(teams, obj.away.teamId, 'id')
     const awayDist = NormalDistribution(awayTeam.average, awayTeam.variance)
     const homeTeam = getItem(teams, obj.home.teamId, 'id')
@@ -61,10 +60,75 @@ const generateSimulation = (teams, futureSchedule) => {
       winner = 'HOME'
     }
     obj.winner = winner
-    console.log(obj)
+    return obj
   })
 }
-// const simulateRegularSeason = (teamDetails, remainingSchedule)
+
+const calcPlayoffRankings = (teams) => {
+  if (teams.length !== 0) {
+    const division1Winner = teams.filter(obj => obj.divisionId === 0).sort((a, b) => {
+      if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+        return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+      }
+      return b.record.calculated.wins - a.record.calculated.wins
+    })[0]
+    const division2Winner = teams.filter(obj => obj.divisionId === 1).sort((a, b) => {
+      if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+        return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+      }
+      return b.record.calculated.wins - a.record.calculated.wins
+    })[0]
+    const divisionWinners = [division1Winner, division2Winner].sort((a, b) => {
+      if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+        return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+      }
+      return b.record.calculated.wins - a.record.calculated.wins
+    })
+    const nonWinners = teams.filter(obj => {
+      return !divisionWinners.includes(obj)
+    }).sort((a, b) => {
+      if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+        return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+      }
+      return b.record.calculated.wins - a.record.calculated.wins
+    })
+    let playoffRankings = [...divisionWinners, ...nonWinners]
+    playoffRankings = playoffRankings.map((obj, index) => {
+      obj.playoffSeed = index + 1;
+      return obj;
+    })
+    return playoffRankings.sort((a, b) => {
+      return a.playoffSeed - b.playoffSeed
+    });
+  }
+  return []
+}
+
+const calcRecords = (results, teams) => {
+  let data = teams.map(obj => {
+    return { ...obj, record: { ...obj.record, calculated: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 } } }
+  })
+  const indexes = teams.reduce((map, obj, ind) => {
+    map[obj.id] = ind
+    return map
+  }, {})
+  for (let x in results) {
+    const game = results[x]
+    if (game.winner === "AWAY") {
+      data[indexes[game.away.teamId]].record.calculated.wins += 1
+      data[indexes[game.home.teamId]].record.calculated.losses += 1
+    } else {
+      data[indexes[game.home.teamId]].record.calculated.wins += 1
+      data[indexes[game.away.teamId]].record.calculated.losses += 1
+    }
+    data[indexes[game.home.teamId]].record.calculated.pointsFor += game.home.totalPoints
+    data[indexes[game.home.teamId]].record.calculated.pointsAgainst += game.away.totalPoints
+    data[indexes[game.away.teamId]].record.calculated.pointsFor += game.away.totalPoints
+    data[indexes[game.away.teamId]].record.calculated.pointsAgainst += game.home.totalPoints
+  }
+  data = calcPlayoffRankings(data)
+  return data
+}
 
 function App() {
   const [currentWeek, updateCurrentWeek] = useState(null);
@@ -72,8 +136,8 @@ function App() {
   const [league, updateLeague] = useState("78513283");
   const [year, updateYear] = useState(2020);
   const [teams, updateTeams] = useState([]);
-  const [schedule, updateSchedule] = useState([]);
   const [futureSchedule, updateFutureSchedule] = useState([]);
+  const [pastSchedule, updatePastSchedule] = useState([]);
   const [selectedMatchup, updateMatchup] = useState(null)
   const [away, updateAway] = useState({})
   const [home, updateHome] = useState({})
@@ -83,10 +147,45 @@ function App() {
   const [awayRandom, updateAwayRandom] = useState(Math.random())
   const [homeRandom, updateHomeRandom] = useState(Math.random())
   const [graphData, updateGraphData] = useState([])
+  const [simulatedData, updateSimulation] = useState([])
 
   const refresh = () => {
     updateAwayRandom(Math.random())
     updateHomeRandom(Math.random())
+  }
+
+  const simulation = () => {
+    let results = []
+    let data = []
+    for (let i = 1; i <= 10000; i++) {
+      const future = generateSimulationScores(teams, futureSchedule)
+      const sim = calcRecords([...pastSchedule, ...future], teams)
+      results.push([...pastSchedule, ...future])
+      data.push(sim)
+    }
+    let aggData = teams.map(obj => {
+      return { ...obj, playoffSeed: 0, record: { ...obj.record, calculated: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 } } }
+    })
+    const aggIndexes = teams.reduce((map, obj, ind) => {
+      map[obj.id] = ind
+      return map
+    }, {})
+    for (let x in data) {
+      const indexes = data[x].reduce((map, obj, ind) => {
+        map[obj.id] = ind
+        return map
+      }, {})
+      for (let y in data[x]) {
+        aggData[aggIndexes[data[x][y].id]].playoffSeed += data[x][indexes[data[x][y].id]].playoffSeed / 10000
+        aggData[aggIndexes[data[x][y].id]].record.calculated.wins += data[x][indexes[data[x][y].id]].record.calculated.wins/ 10000
+        aggData[aggIndexes[data[x][y].id]].record.calculated.losses += data[x][indexes[data[x][y].id]].record.calculated.losses / 10000
+        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsFor += data[x][indexes[data[x][y].id]].record.calculated.pointsFor / 10000
+        aggData[aggIndexes[data[x][y].id]].record.calculated.pointsAgainst += data[x][indexes[data[x][y].id]].record.calculated.pointsAgainst / 10000
+      }
+    }
+    updateSimulation(aggData.sort((a, b) => {
+      return a.playoffSeed - b.playoffSeed
+    }))
   }
 
   useEffect(() => {
@@ -106,32 +205,6 @@ function App() {
         `https://fantasy.espn.com/apis/v3/games/ffl/seasons/${year}/segments/0/leagues/${league}?view=mMatchup&view=mMatchupScore`
       )
       .then(res => {
-        const dataHome = res.data.schedule.map(obj => {
-          return {
-            id: obj.id,
-            week: obj.matchupPeriodId,
-            teamId: obj.home.teamId,
-            totalPoints: obj.home.totalPoints
-          };
-        });
-        const dataAway = res.data.schedule.map(obj => {
-          return {
-            id: obj.id,
-            week: obj.matchupPeriodId,
-            teamId: obj.away.teamId,
-            totalPoints: obj.away.totalPoints
-          };
-        });
-        const data = dataHome.concat(dataAway);
-        updateSchedule(
-          data
-            .sort((a, b) => {
-              return a.week - b.week;
-            })
-            .filter(obj => {
-              return obj.week < currentWeek;
-            })
-        );
         const currentSched = res.data.schedule.filter(obj => {
           return obj.matchupPeriodId === currentWeek
         })
@@ -140,6 +213,9 @@ function App() {
         );
         updateFutureSchedule(res.data.schedule.filter(obj => {
           return obj.matchupPeriodId >= currentWeek
+        }))
+        updatePastSchedule(res.data.schedule.filter(obj => {
+          return obj.matchupPeriodId < currentWeek
         }))
         if (currentSched.length > 0) {
           updateMatchup(
@@ -150,9 +226,28 @@ function App() {
   }, [league, year, currentWeek]);
 
   useEffect(() => {
+    const dataHome = pastSchedule.map(obj => {
+      return {
+        id: obj.id,
+        week: obj.matchupPeriodId,
+        teamId: obj.home.teamId,
+        totalPoints: obj.home.totalPoints
+      };
+    });
+    const dataAway = pastSchedule.map(obj => {
+      return {
+        id: obj.id,
+        week: obj.matchupPeriodId,
+        teamId: obj.away.teamId,
+        totalPoints: obj.away.totalPoints
+      };
+    });
+    const data = dataHome.concat(dataAway);
     const updatedTeams = teams.map(obj => {
       const stats = getStats(
-        schedule
+        data.sort((a, b) => {
+          return a.week - b.week;
+        })
           .filter(obj2 => {
             return obj2.teamId === obj.id;
           })
@@ -161,8 +256,9 @@ function App() {
 
       return { ...obj, average: stats.average, variance: stats.variance }
     })
-    updateTeams(updatedTeams)
-  }, [schedule])
+    const calcedTeams = calcRecords(pastSchedule, updatedTeams)
+    updateTeams(calcedTeams)
+  }, [pastSchedule])
 
   useEffect(() => {
     try {
@@ -189,15 +285,18 @@ function App() {
     return <div>Getting team data...</div>
   }
 
-  if (schedule.length === 0) {
+  if (pastSchedule.length === 0) {
     return <div>Getting historical data...</div>
   }
 
   if (!selectedMatchup) {
     return <div>Getting matchup data...</div>
   }
-  console.log(futureSchedule)
-  console.log(teams)
+
+  if (!teams[0].record.calculated) {
+    return <div>Calculating...</div>
+  }
+
   return (
     <div>
       {/* {teams.map(obj => (
@@ -285,10 +384,10 @@ function App() {
             <div className='col'>
               <div className='row row-header'><div className='nameCell'>Team Name</div></div>
               {teams.filter(obj => obj.divisionId === 0).sort((a, b) => {
-                if (b.record.overall.wins - a.record.overall.wins === 0) {
-                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
                 }
-                return b.record.overall.wins - a.record.overall.wins
+                return b.record.calculated.wins - a.record.calculated.wins
               }).map(obj => {
                 return <div className='nameCell'>{obj.location} {obj.nickname}</div>
 
@@ -297,12 +396,12 @@ function App() {
             <div className='col valueCells'>
               <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
               {teams.filter(obj => obj.divisionId === 0).sort((a, b) => {
-                if (b.record.overall.wins - a.record.overall.wins === 0) {
-                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
                 }
-                return b.record.overall.wins - a.record.overall.wins
+                return b.record.calculated.wins - a.record.calculated.wins
               }).map(obj => {
-                return <div className="row"><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+                return <div className="row"><div className='valueCell'>{obj.record.calculated.wins}</div><div className='valueCell'>{obj.record.calculated.losses}</div><div className='valueCell'>{obj.record.calculated.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsAgainst.toFixed(2)}</div></div>
 
               })}
             </div>
@@ -314,10 +413,10 @@ function App() {
             <div className='col'>
               <div className='row row-header'><div className='nameCell'>Team Name</div></div>
               {teams.filter(obj => obj.divisionId === 1).sort((a, b) => {
-                if (b.record.overall.wins - a.record.overall.wins === 0) {
-                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
                 }
-                return b.record.overall.wins - a.record.overall.wins
+                return b.record.calculated.wins - a.record.calculated.wins
               }).map(obj => {
                 return <div className='nameCell'>{obj.location} {obj.nickname}</div>
 
@@ -326,19 +425,93 @@ function App() {
             <div className='col valueCells'>
               <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
               {teams.filter(obj => obj.divisionId === 1).sort((a, b) => {
-                if (b.record.overall.wins - a.record.overall.wins === 0) {
-                  return b.record.overall.pointsFor - a.record.overall.pointsFor
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
                 }
-                return b.record.overall.wins - a.record.overall.wins
+                return b.record.calculated.wins - a.record.calculated.wins
               }).map(obj => {
-                return <div className="row"><div className='valueCell'>{obj.record.overall.wins}</div><div className='valueCell'>{obj.record.overall.losses}</div><div className='valueCell'>{obj.record.overall.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.overall.pointsAgainst.toFixed(2)}</div></div>
+                return <div className="row"><div className='valueCell'>{obj.record.calculated.wins}</div><div className='valueCell'>{obj.record.calculated.losses}</div><div className='valueCell'>{obj.record.calculated.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsAgainst.toFixed(2)}</div></div>
 
               })}
             </div>
           </div>
         </div>
       </div>
-      <button onClick={()=>generateSimulation(teams, futureSchedule)}>Run Simulation</button>
+      <div className='rankingsTable'>
+        <div className='fullWidth header'>Playoff Rankings</div>
+        {teams.map(obj => {
+return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
+        })}
+      </div>
+
+      <div className='row fullWidth spaceEvenly'>
+        <div className='rankingsTable'>
+          <div className='fullWidth header'>Projected Guy's Division</div>
+          <div className='row'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              {simulatedData.filter(obj => obj.divisionId === 0).sort((a, b) => {
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+                }
+                return b.record.calculated.wins - a.record.calculated.wins
+              }).map(obj => {
+                return <div className='nameCell'>{obj.location} {obj.nickname}</div>
+
+              })}
+            </div>
+            <div className='col valueCells'>
+              <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+              {simulatedData.filter(obj => obj.divisionId === 0).sort((a, b) => {
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+                }
+                return b.record.calculated.wins - a.record.calculated.wins
+              }).map(obj => {
+                return <div className="row"><div className='valueCell'>{obj.record.calculated.wins.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.losses.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsAgainst.toFixed(2)}</div></div>
+
+              })}
+            </div>
+          </div>
+        </div>
+        <div className='rankingsTable'>
+          <div className='fullWidth header'>Projected Girl's Division</div>
+          <div className='row'>
+            <div className='col'>
+              <div className='row row-header'><div className='nameCell'>Team Name</div></div>
+              {simulatedData.filter(obj => obj.divisionId === 1).sort((a, b) => {
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+                }
+                return b.record.calculated.wins - a.record.calculated.wins
+              }).map(obj => {
+                return <div className='nameCell'>{obj.location} {obj.nickname}</div>
+
+              })}
+            </div>
+            <div className='col valueCells'>
+              <div className="row row-header"><div className='valueCell'>Wins</div><div className='valueCell'>Losses</div><div className='valueCell'>Points For</div><div className='valueCell'>Points Against</div></div>
+              {simulatedData.filter(obj => obj.divisionId === 1).sort((a, b) => {
+                if (b.record.calculated.wins - a.record.calculated.wins === 0) {
+                  return b.record.calculated.pointsFor - a.record.calculated.pointsFor
+                }
+                return b.record.calculated.wins - a.record.calculated.wins
+              }).map(obj => {
+                return <div className="row"><div className='valueCell'>{obj.record.calculated.wins.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.losses.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsFor.toFixed(2)}</div><div className='valueCell'>{obj.record.calculated.pointsAgainst.toFixed(2)}</div></div>
+
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className='rankingsTable'>
+        <div className='fullWidth header'>Projected Playoff Rankings</div>
+        {simulatedData.map(obj => {
+          return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
+        })}
+      </div>
+      <button onClick={simulation}>Run Simulation</button>
     </div>
   );
 }
