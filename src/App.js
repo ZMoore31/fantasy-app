@@ -213,16 +213,16 @@ function App() {
         const currentSched = res.data.schedule.filter(obj => {
           return obj.matchupPeriodId === currentWeek
         })
-        updateCurrentSchedule(
-          currentSched
-        );
-        updateFutureSchedule(res.data.schedule.filter(obj => {
-          return obj.matchupPeriodId >= currentWeek
-        }))
-        updatePastSchedule(res.data.schedule.filter(obj => {
-          return obj.matchupPeriodId < currentWeek
-        }))
         if (currentSched.length > 0) {
+          updateCurrentSchedule(
+            currentSched
+          );
+          updateFutureSchedule(res.data.schedule.filter(obj => {
+            return obj.matchupPeriodId >= currentWeek
+          }))
+          updatePastSchedule(res.data.schedule.filter(obj => {
+            return obj.matchupPeriodId < currentWeek
+          }))
           updateMatchup(
             currentSched[0].id
           )
@@ -434,7 +434,7 @@ function App() {
           return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
         })}
       </div>
-      <div className='row fullWidth centerRow' style={{margin: '24px 0 8px 0'}}><button onClick={simulation}>{simulatedData.length ? "Refresh" : "Run"} Simulation</button></div>
+      <div className='row fullWidth centerRow' style={{ margin: '24px 0 8px 0' }}><button onClick={simulation}>{simulatedData.length ? "Refresh" : "Run"} Simulation</button></div>
       {simulatedData.length ? <Fragment><div className='row fullWidth spaceEvenly'>
         <div className='table'>
           <div className='fullWidth header'>Projected Guy's Division</div>
@@ -537,7 +537,7 @@ function App() {
             </div>
           </div>
         </div>
-      </Fragment>: null}
+      </Fragment> : null}
     </div>
   );
 }
