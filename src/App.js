@@ -228,7 +228,7 @@ function App() {
           )
         }
       });
-  }, [league, year, currentWeek, teams]);
+  }, [league, year, currentWeek]);
 
   useEffect(() => {
     const dataHome = pastSchedule.map(obj => {
