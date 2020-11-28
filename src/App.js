@@ -164,7 +164,7 @@ function App() {
       data.push(sim)
     }
     let aggData = teams.map(obj => {
-      return { ...obj, playoffSeed: 0, record: { ...obj.record, calculated: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 } } }
+      return { ...obj, playoffSeed: 0, playoffMatrix: {}, record: { ...obj.record, calculated: { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 } } }
     })
     const aggIndexes = teams.reduce((map, obj, ind) => {
       map[obj.id] = ind
@@ -177,12 +177,14 @@ function App() {
       }, {})
       for (let y in data[x]) {
         aggData[aggIndexes[data[x][y].id]].playoffSeed += data[x][indexes[data[x][y].id]].playoffSeed / 10000
+        aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] = (aggData[aggIndexes[data[x][y].id]].playoffMatrix[data[x][indexes[data[x][y].id]].playoffSeed] || 0) + 1;
         aggData[aggIndexes[data[x][y].id]].record.calculated.wins += data[x][indexes[data[x][y].id]].record.calculated.wins/ 10000
         aggData[aggIndexes[data[x][y].id]].record.calculated.losses += data[x][indexes[data[x][y].id]].record.calculated.losses / 10000
         aggData[aggIndexes[data[x][y].id]].record.calculated.pointsFor += data[x][indexes[data[x][y].id]].record.calculated.pointsFor / 10000
         aggData[aggIndexes[data[x][y].id]].record.calculated.pointsAgainst += data[x][indexes[data[x][y].id]].record.calculated.pointsAgainst / 10000
       }
     }
+    console.log(aggData)
     updateSimulation(aggData.sort((a, b) => {
       return a.playoffSeed - b.playoffSeed
     }))
