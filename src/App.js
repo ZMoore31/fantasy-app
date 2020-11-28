@@ -199,6 +199,7 @@ function App() {
       )
       .then(res => {
         updateCurrentWeek(Number(res.data.scoringPeriodId));
+        // updateCurrentWeek(3);
         updateTeams(res.data.teams);
       });
   }, [league, year]);
@@ -426,14 +427,15 @@ function App() {
           </div>
         </div>
       </div>
-      <div className='table'>
+      <div className='table playoffs'>
         <div className='fullWidth header'>Playoff Rankings</div>
+        <div className='row fullWidth centerRow row-header'><div className='nameCell'>Team Name</div><div className='valueCell'>Playoff Seed</div></div>
         {teams.map(obj => {
           return <div className='row fullWidth centerRow'><div className='nameCell'>{obj.location} {obj.nickname}</div><div className='valueCell'>{obj.playoffSeed.toFixed(2)}</div></div>
         })}
       </div>
       <div className='row fullWidth centerRow' style={{margin: '24px 0 8px 0'}}><button onClick={simulation}>{simulatedData.length ? "Refresh" : "Run"} Simulation</button></div>
-      {simulatedData.length && <Fragment><div className='row fullWidth spaceEvenly'>
+      {simulatedData.length ? <Fragment><div className='row fullWidth spaceEvenly'>
         <div className='table'>
           <div className='fullWidth header'>Projected Guy's Division</div>
           <div className='row'>
@@ -535,7 +537,7 @@ function App() {
             </div>
           </div>
         </div>
-      </Fragment>}
+      </Fragment>: null}
     </div>
   );
 }

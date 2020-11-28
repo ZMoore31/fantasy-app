@@ -34,7 +34,7 @@
   width: 100% !important;
 }
 
-.rankingsTable {
+.table {
   padding: 16px;
   margin: 8px;
 }
@@ -73,6 +73,10 @@
   width: 100px;
   text-align: center;
   flex: 0 0 auto;
+}
+
+.playoffs.table .valueCell {
+  text-align: right;
 }
 
 .graphContainer {
