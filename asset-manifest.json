@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/fantasy-app/static/css/main.b3ecce22.chunk.css",
-    "main.js": "/fantasy-app/static/js/main.7abc15eb.chunk.js",
-    "main.js.map": "/fantasy-app/static/js/main.7abc15eb.chunk.js.map",
+    "main.js": "/fantasy-app/static/js/main.5dcb3a51.chunk.js",
+    "main.js.map": "/fantasy-app/static/js/main.5dcb3a51.chunk.js.map",
     "runtime-main.js": "/fantasy-app/static/js/runtime-main.ce477694.js",
     "runtime-main.js.map": "/fantasy-app/static/js/runtime-main.ce477694.js.map",
     "static/js/2.9d46f37e.chunk.js": "/fantasy-app/static/js/2.9d46f37e.chunk.js",
@@ -17,6 +17,6 @@
     "static/js/runtime-main.ce477694.js",
     "static/js/2.9d46f37e.chunk.js",
     "static/css/main.b3ecce22.chunk.css",
-    "static/js/main.7abc15eb.chunk.js"
+    "static/js/main.5dcb3a51.chunk.js"
   ]
 }
